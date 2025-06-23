@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Daily Quiz</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f0f4f8;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  .quiz-container {
+    background: white;
+    padding: 25px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    max-width: 600px;
+    width: 100%;
+  }
+  h2, h3 {
+    color: #333;
+  }
+  .select-group {
+    margin-bottom: 20px;
+  }
+  select {
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    width: 100%;
+    margin-top: 5px;
+  }
+  label {
+    font-weight: 600;
+  }
+  .question {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+  }
+  .options {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 15px;
+  }
+  .options li {
+    background: #e3e8ef;
+    margin-bottom: 10px;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    user-select: none;
+  }
+  .options li:hover:not(.disabled) {
+    background: #b2c2d9;
+  }
+  .options li.selected {
+    background: #0077b6;
+    color: white;
+  }
+  .options li.correct {
+    background: #28a745;
+    color: white;
+  }
+  .options li.wrong {
+    background: #dc3545;
+    color: white;
+  }
+  .options li.disabled {
+    cursor: default;
+    opacity: 0.7;
+  }
+  button {
+    padding: 12px 20px;
+    background: #0096c7;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    user-select: none;
+  }
+  button:hover:not(:disabled) {
+    background: #0077b6;
+  }
+  button:disabled {
+    background: #b0bec5;
+    cursor: not-allowed;
+  }
+  .timer {
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    color: #0077b6;
+    user-select: none;
+  }
+  .result {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0077b6;
+    text-align: center;
+  }
+  .restart-btn {
+    margin-top: 20px;
+    width: 100%;
+  }
+</style>
+</head>
+<body>
+
+<div class="quiz-container" role="main">
+  <h2 id="quiz-title">Daily Quiz</h2>
+  
+  <div id="setup-container">
+    <div class="select-group">
+      <label for="categorySelect">Select Category:</label>
+      <select id="categorySelect" aria-label="Select Quiz Category">
+        <option value="" disabled selected>Choose a category</option>
+      </select>
+    </div>
+    <div class="select-group">
+      <label for="levelSelect">Select Difficulty Level:</label>
+      <select id="levelSelect" aria-label="Select Difficulty Level" disabled>
+        <option value="" disabled selected>Choose a level</option>
+        <option value="easy">Easy</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="hard">Hard</option>
+      </select>
+    </div>
+    <button id="start-btn" disabled>Start Quiz</button>
+  </div>
+  
+  <div id="quiz" style="display:none;">
+    <div class="timer" id="timer">Time left: 15s</div>
+    <div class="question" id="question-text"></div>
+    <ul class="options" id="options-list"></ul>
+    <button id="next-btn" disabled>Next</button>
+  </div>
+  
+  <div id="result" class="result" style="display:none;"></div>
+  <button id="restart-btn" class="restart-btn" style="display:none;">Restart Quiz</button>
+</div>
+
+<script>
+  // Quiz questions structured by category and difficulty level
+  const quizData = {
+    general: {
+      easy: [
+        {question: "What is the capital of Jamaica?", options: ["Kingston", "Montego Bay", "Ocho Rios", "Negril"], answer: "Kingston"},
+        {question: "Which language is primarily spoken in Jamaica?", options: ["Spanish", "English", "French", "Portuguese"], answer: "English"},
+        {question: "What is the currency of Jamaica?", options: ["USD", "JMD", "CAD", "EUR"], answer: "JMD"},
+        {question: "Which ocean surrounds Jamaica?", options: ["Atlantic Ocean", "Pacific Ocean", "Indian Ocean", "Caribbean Sea"], answer: "Caribbean Sea"},
+        {question: "What is Jamaica's national bird?", options: ["Hummingbird", "Eagle", "Parrot", "Sparrow"], answer: "Hummingbird"},
+        {question: "What colors are in the Jamaican flag?", options: ["Green, Black, Yellow", "Red, White, Blue", "Black, Red, Yellow", "Green, Yellow, Black"], answer: "Green, Black, Yellow"},
+        {question: "Which sport is very popular in Jamaica?", options: ["Cricket", "Soccer", "Track and Field", "Rugby"], answer: "Track and Field"},
+        {question: "What is Jamaica's official motto?", options: ["Out of Many, One People", "Unity is Strength", "One Love", "Together We Rise"], answer: "Out of Many, One People"},
+        {question: "When did Jamaica gain independence?", options: ["1962", "1958", "1975", "1948"], answer: "1962"},
+        {question: "Who is a famous Jamaican musician?", options: ["Bob Marley", "Elton John", "Michael Jackson", "Prince"], answer: "Bob Marley"}
+      ],
+      intermediate: [
+        {question: "Which Jamaican city is known as the tourism capital?", options: ["Montego Bay", "Kingston", "Negril", "Port Antonio"], answer: "Montego Bay"},
+        {question: "What is the main ingredient in 'Jerk Chicken'?", options: ["Chicken", "Beef", "Pork", "Fish"], answer: "Chicken"},
+        {question: "Who wrote the Jamaican national anthem?", options: ["Robert Lightbourne and Hugh Sherlock", "Bob Marley", "Marcus Garvey", "Claude McKay"], answer: "Robert Lightbourne and Hugh Sherlock"},
+        {question: "Which mountain range runs through Jamaica?", options: ["Blue Mountains", "Rocky Mountains", "Appalachians", "Alps"], answer: "Blue Mountains"},
+        {question: "What is the approximate population of Jamaica?", options: ["3 million", "10 million", "7 million", "15 million"], answer: "3 million"},
+        {question: "Who was Jamaica's first female Prime Minister?", options: ["Portia Simpson-Miller", "P.J. Patterson", "Bruce Golding", "Edward Seaga"], answer: "Portia Simpson-Miller"},
+        {question: "Which Jamaican athlete is famous for sprinting?", options: ["Usain Bolt", "Yohan Blake", "Asafa Powell", "Shelly-Ann Fraser-Pryce"], answer: "Usain Bolt"},
+        {question: "What sea borders Jamaica to the south?", options: ["Caribbean Sea", "Atlantic Ocean", "Pacific Ocean", "Indian Ocean"], answer: "Caribbean Sea"},
+        {question: "What is the name of the Jamaican currency symbol?", options: ["J$", "JMD", "JD", "JM$"], answer: "J$"},
+        {question: "Which of these is a famous Jamaican festival?", options: ["Reggae Sumfest", "Carnival", "Oktoberfest", "Mardi Gras"], answer: "Reggae Sumfest"}
+      ],
+      hard: [
+        {question: "What year did Jamaica join the United Nations?", options: ["1962", "1945", "1970", "1950"], answer: "1962"},
+        {question: "Which of these authors wrote the novel 'The Harder They Come'?", options: ["Michael Thelwell", "Bob Marley", "Claude McKay", "Jean D’Costa"], answer: "Michael Thelwell"},
+        {question: "What is the main export of Jamaica?", options: ["Bauxite", "Sugar", "Coffee", "Bananas"], answer: "Bauxite"},
+        {question: "Who was the Governor-General of Jamaica in 2006?", options: ["Sir Kenneth Hall", "Sir Patrick Allen", "Edward Seaga", "Bruce Golding"], answer: "Sir Kenneth Hall"},
+        {question: "What is the altitude of Blue Mountain Peak?", options: ["2256m", "1500m", "1800m", "2000m"], answer: "2256m"},
+        {question: "Which Jamaican city is home to the University of the West Indies?", options: ["Kingston", "Montego Bay", "Ocho Rios", "Port Antonio"], answer: "Kingston"},
+        {question: "Which Jamaican artist won a Grammy for Best Reggae Album in 2019?", options: ["Chronixx", "Damian Marley", "Sean Paul", "Buju Banton"], answer: "Chronixx"},
+        {question: "What year did Jamaica become a member of CARICOM?", options: ["1973", "1980", "1965", "1970"], answer: "1973"},
+        {question: "Which Jamaican landmark is also a UNESCO World Heritage Site?", options: ["Blue and John Crow Mountains", "Dunn's River Falls", "Bob Marley Museum", "Rose Hall"], answer: "Blue and John Crow Mountains"},
+        {question: "Who was the first Jamaican Olympic gold medalist?", options: ["Arthur Wint", "Usain Bolt", "Donald Quarrie", "Merlene Ottey"], answer: "Arthur Wint"}
+      ]
+    },
+    culture: {
+      easy: [
+        {question: "What is Jamaica's national dish?", options: ["Ackee and Saltfish", "Jerk Chicken", "Curry Goat", "Rice and Peas"], answer: "Ackee and Saltfish"},
+        {question: "Who is the famous Jamaican reggae musician?", options: ["Bob Marley", "Michael Jackson", "Elvis Presley", "Stevie Wonder"], answer: "Bob Marley"},
+        {question: "Which dancehall artist is known as 'Di Great'?", options: ["Vybz Kartel", "Shabba Ranks", "Sean Paul", "Beenie Man"], answer: "Vybz Kartel"},
+        {question: "Which festival celebrates reggae music in Jamaica?", options: ["Reggae Sumfest", "Carnival", "Jazz Festival", "Oktoberfest"], answer: "Reggae Sumfest"},
+        {question: "What is the name of Jamaica’s indigenous language?", options: ["Patois", "Creole", "French", "Spanish"], answer: "Patois"},
+        {question: "What is a common instrument in reggae music?", options: ["Bass guitar", "Violin", "Piano", "Flute"], answer: "Bass guitar"},
+        {question: "Which sport is commonly associated with Jamaica?", options: ["Track and Field", "Ice Hockey", "Cricket", "Baseball"], answer: "Track and Field"},
+        {question: "What is the name of the Jamaican style of cooking?", options: ["Jerk", "Barbecue", "Frying", "Baking"], answer: "Jerk"},
+        {question: "What is Jamaica’s national motto?", options: ["Out of Many, One People", "Unity is Strength", "One Love", "Together We Rise"], answer: "Out of Many, One People"},
+        {question: "What is a popular Jamaican beverage?", options: ["Red Stripe Beer", "Coca-Cola", "Pepsi", "Sprite"], answer: "Red Stripe Beer"}
+      ],
+      intermediate: [
+        {question: "Which Jamaican poet wrote 'If I Were King'?", options: ["Claude McKay", "Linton Kwesi Johnson", "Derek Walcott", "Maya Angelou"], answer: "Claude McKay"},
+        {question: "Which city is known for hosting Reggae Sumfest?", options: ["Montego Bay", "Kingston", "Negril", "Ocho Rios"], answer: "Montego Bay"},
+        {question: "Who is the female dancehall queen known internationally?", options: ["Ding Dong", "Lady Saw", "Spice", "Shenseea"], answer: "Lady Saw"},
+        {question: "What is the Rastafari movement's sacred herb?", options: ["Marijuana", "Tobacco", "Coffee", "Tea"], answer: "Marijuana"},
+        {question: "Which Jamaican athlete is known for sprinting?", options: ["Usain Bolt", "Yohan Blake", "Asafa Powell", "Shelly-Ann Fraser-Pryce"], answer: "Usain Bolt"},
+        {question: "Which instrument is important in mento music?", options: ["Banjo", "Saxophone", "Piano", "Trumpet"], answer: "Banjo"},
+        {question: "What year was Bob Marley inducted into the Rock and Roll Hall of Fame?", options: ["1994", "1985", "2000", "2010"], answer: "1994"},
+        {question: "What Jamaican holiday is celebrated on August 6th?", options: ["Independence Day", "Emancipation Day", "Labour Day", "Christmas"], answer: "Independence Day"},
+        {question: "What is the name of Jamaica’s national flower?", options: ["Lignum Vitae", "Hibiscus", "Orchid", "Rose"], answer: "Lignum Vitae"},
+        {question: "What is the name of Jamaica’s traditional folk music?", options: ["Mento", "Reggae", "Dancehall", "Ska"], answer: "Mento"}
+      ],
+      hard: [
+        {question: "Who wrote the novel 'No Telephone to Heaven'?", options: ["Michelle Cliff", "Jean D’Costa", "Marlon James", "Irvine Welsh"], answer: "Michelle Cliff"},
+        {question: "What is the origin of the term 'One Love' in Jamaican culture?", options: ["Bob Marley song", "Marcus Garvey's speech", "Rastafari greeting", "National motto"], answer: "Bob Marley song"},
+        {question: "Which Jamaican poet won the Neustadt International Prize for Literature?", options: ["Derek Walcott", "Claude McKay", "Mervyn Morris", "Linton Kwesi Johnson"], answer: "Derek Walcott"},
+        {question: "What year was Jamaica’s first reggae sound system founded?", options: ["1950", "1960", "1940", "1970"], answer: "1950"},
+        {question: "Who was the first Jamaican woman to win a Grammy?", options: ["Rihanna", "Shaggy", "Grace Jones", "Sheryl Lee Ralph"], answer: "Rihanna"},
+        {question: "Which book details Jamaica’s history in the 18th century?", options: ["Jamaica Before Columbus", "A History of Jamaica", "The Harder They Come", "Caribbean History"], answer: "A History of Jamaica"},
+        {question: "Which Jamaican artist is known as 'The Wailer'?", options: ["Bunny Wailer", "Peter Tosh", "Bob Marley", "Toots Hibbert"], answer: "Bunny Wailer"},
+        {question: "Which dancehall song won a Grammy in 2003?", options: ["Get Busy", "No Letting Go", "Pon De Replay", "Turn Me On"], answer: "Get Busy"},
+        {question: "What is the title of the Jamaican national anthem?", options: ["Jamaica, Land We Love", "God Save the Queen", "One Love", "Land of My Birth"], answer: "Jamaica, Land We Love"},
+        {question: "Who was the Jamaican playwright behind 'More Flowers'?", options: ["Trevor Rhone", "Errol Hill", "Barry Reckord", "Noel Clarke"], answer: "Trevor Rhone"}
+      ]
+    },
+    flag: {
+      easy: [
+        {question: "What colors are on the Jamaican flag?", options: ["Green, Black, Yellow", "Red, White, Blue", "Black, Red, Yellow", "Green, Yellow, Red"], answer: "Green, Black, Yellow"},
+        {question: "What shape is on the Jamaican flag?", options: ["Saltire (X shape)", "Circle", "Square", "Triangle"], answer: "Saltire (X shape)"},
+        {question: "How many colors does the Jamaican flag have?", options: ["3", "4", "2", "5"], answer: "3"},
+        {question: "What does the color green on the flag represent?", options: ["Agriculture", "Sunshine", "Hope", "Wealth"], answer: "Agriculture"},
+        {question: "What does the black color symbolize?", options: ["Strength and creativity", "Poverty", "Nature", "Royalty"], answer: "Strength and creativity"},
+        {question: "What does the gold/yellow stand for?", options: ["Natural wealth and sunshine", "Hope", "Sunset", "The people"], answer: "Natural wealth and sunshine"},
+        {question: "When was the Jamaican flag adopted?", options: ["1962", "1950", "1975", "1948"], answer: "1962"},
+        {question: "Which side of the flag is the green triangle?", options: ["Top and bottom", "Left", "Right", "Center"], answer: "Top and bottom"},
+        {question: "Which shape divides the colors on the flag?", options: ["Diagonal cross", "Vertical stripe", "Horizontal stripe", "Circle"], answer: "Diagonal cross"},
+        {question: "Which color appears twice on the flag?", options: ["Green", "Black", "Yellow", "None"], answer: "Green"}
+      ],
+      intermediate: [
+        {question: "What is another name for the diagonal cross on the Jamaican flag?", options: ["Saltire", "Chevron", "Pall", "Fess"], answer: "Saltire"},
+        {question: "Who designed the Jamaican flag?", options: ["Donovan Bailey", "Lionel Sawyer", "Norman Manley", "Leonard Parkinson"], answer: "Norman Manley"},
+        {question: "Which year did Jamaica first fly its flag?", options: ["1962", "1955", "1970", "1960"], answer: "1962"},
+        {question: "What does the saltire on the Jamaican flag represent?", options: ["The cross of St. Andrew", "Unity", "Freedom", "Christianity"], answer: "The cross of St. Andrew"},
+        {question: "Which other country's flag inspired Jamaica's?", options: ["Scotland", "England", "Ireland", "USA"], answer: "Scotland"},
+        {question: "How many triangles does the Jamaican flag have?", options: ["4", "3", "2", "5"], answer: "4"},
+        {question: "Which colors are triangles on the Jamaican flag?", options: ["Green and Black", "Yellow and Green", "Black and Yellow", "Green and Yellow"], answer: "Green and Black"},
+        {question: "How is the Jamaican flag unique among Caribbean nations?", options: ["It has no red", "It uses the most colors", "It has a circle", "It has a star"], answer: "It has no red"},
+        {question: "What symbolism does the Jamaican flag's design express?", options: ["Hardships overcome, hope and wealth", "Peace and unity", "Power and strength", "Courage and freedom"], answer: "Hardships overcome, hope and wealth"},
+        {question: "Which date is Jamaica’s Flag Day?", options: ["August 6", "January 1", "October 18", "June 23"], answer: "August 6"}
+      ],
+      hard: [
+        {question: "Who proposed the design of the Jamaican flag?", options: ["Leonard Parkinson", "Norman Manley", "Marcus Garvey", "Edward Seaga"], answer: "Leonard Parkinson"},
+        {question: "What was the main inspiration for the flag’s gold color?", options: ["Sunshine and natural resources", "Royalty", "Historical events", "Freedom"], answer: "Sunshine and natural resources"},
+        {question: "What specific cross does the saltire represent on the Jamaican flag?", options: ["Cross of St. Andrew", "Cross of St. George", "Cross of St. Patrick", "Cross of Lorraine"], answer: "Cross of St. Andrew"},
+        {question: "In which year was the Jamaican flag officially adopted by parliament?", options: ["1962", "1963", "1960", "1959"], answer: "1962"},
+        {question: "How is the Jamaican flag’s color order unique?", options: ["Gold is diagonal", "Green and black alternate", "Yellow surrounds black", "No red is used"], answer: "Gold is diagonal"},
+        {question: "What political party was associated with the flag’s designer?", options: ["People’s National Party", "Jamaica Labour Party", "Socialist Party", "Conservative Party"], answer: "People’s National Party"},
+        {question: "Which regional flag shares a similar saltire design with Jamaica?", options: ["Scotland", "Northern Ireland", "England", "Wales"], answer: "Scotland"},
+        {question: "Which Jamaican law requires flying the flag on official occasions?", options: ["Flag Law 1962", "National Symbols Act", "Independence Act", "Heritage Law"], answer: "Flag Law 1962"},
+        {question: "What is the symbolism of the saltire in Jamaican culture?", options: ["Sacrifice and struggle", "Christian faith", "Unity", "Peace"], answer: "Sacrifice and struggle"},
+        {question: "Which other Caribbean country has a flag with no red, like Jamaica?", options: ["Barbados", "Trinidad and Tobago", "Bahamas", "Cuba"], answer: "Barbados"}
+      ]
+    }
+  };
+
+  // DOM Elements
+  const categorySelect = document.getElementById('categorySelect');
+  const levelSelect = document.getElementById('levelSelect');
+  const startBtn = document.getElementById('start-btn');
+  const setupContainer = document.getElementById('setup-container');
+  const quizDiv = document.getElementById('quiz');
+  const questionText = document.getElementById('question-text');
+  const optionsList = document.getElementById('options-list');
+  const nextBtn = document.getElementById('next-btn');
+  const timerDiv = document.getElementById('timer');
+  const resultDiv = document.getElementById('result');
+  const restartBtn = document.getElementById('restart-btn');
+
+  let currentQuestions = [];
+  let currentQuestionIndex = 0;
+  let score = 0;
+  let selectedOption = null;
+  let timer;
+  const TIME_PER_QUESTION = 15;
+  let timeLeft = TIME_PER_QUESTION;
+
+  // Populate categories dropdown
+  function populateCategories() {
+    Object.keys(quizData).forEach(cat => {
+      const option = document.createElement('option');
+      option.value = cat;
+      option.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+      categorySelect.appendChild(option);
+    });
+  }
+
+  populateCategories();
+
+  // Enable level select only after category is chosen
+  categorySelect.addEventListener('change', () => {
+    levelSelect.disabled = !categorySelect.value;
+    levelSelect.value = '';
+    startBtn.disabled = true;
+  });
+
+  // Enable start button only if both category and level are selected
+  levelSelect.addEventListener('change', () => {
+    startBtn.disabled = !(categorySelect.value && levelSelect.value);
+  });
+
+  startBtn.addEventListener('click', () => {
+    startQuiz(categorySelect.value, levelSelect.value);
+  });
+
+  function startQuiz(category, level) {
+    currentQuestions = quizData[category][level];
+    currentQuestionIndex = 0;
+    score = 0;
+    selectedOption = null;
+    timeLeft = TIME_PER_QUESTION;
+
+    setupContainer.style.display = 'none';
+    resultDiv.style.display = 'none';
+    restartBtn.style.display = 'none';
+    quizDiv.style.display = 'block';
+
+    loadQuestion();
+    startTimer();
+
+    nextBtn.disabled = true;
+    nextBtn.textContent = 'Next';
+    nextBtn.removeEventListener('click', nextQuestion);
+    nextBtn.addEventListener('click', showCorrectAnswer);
+  }
+
+  function loadQuestion() {
+    nextBtn.disabled = true;
+    selectedOption = null;
+    timeLeft = TIME_PER_QUESTION;
+    updateTimer();
+
+    const currentQuestion = currentQuestions[currentQuestionIndex];
+    questionText.textContent = currentQuestion.question;
+
+    optionsList.innerHTML = '';
+    currentQuestion.options.forEach(option => {
+      const li = document.createElement('li');
+      li.textContent = option;
+      li.classList.remove('correct', 'wrong', 'selected', 'disabled');
+      li.style.pointerEvents = 'auto'; // enable clicking
+      li.addEventListener('click', () => selectOption(li, option));
+      optionsList.appendChild(li);
+    });
+  }
+
+  function selectOption(li, option) {
+    // Only allow selecting options if not disabled
+    if (li.classList.contains('disabled')) return;
+
+    // Remove 'selected' from all options
+    Array.from(optionsList.children).forEach(child => child.classList.remove('selected'));
+
+    // Select the clicked option
+    li.classList.add('selected');
+    selectedOption = option;
+
+    // Enable Next button when an option is selected
+    nextBtn.disabled = false;
+  }
+
+  function showCorrectAnswer() {
+    stopTimer();
+    const currentQuestion = currentQuestions[currentQuestionIndex];
+
+    Array.from(optionsList.children).forEach(li => {
+      li.classList.add('disabled');
+      li.style.pointerEvents = 'none';
+      if (li.textContent === currentQuestion.answer) {
+        li.classList.add('correct');
+      } else if (li.classList.contains('selected') && li.textContent !== currentQuestion.answer) {
+        li.classList.add('wrong');
+      }
+    });
+
+    if (selectedOption === currentQuestion.answer) {
+      score++;
+    }
+
+    nextBtn.textContent = currentQuestionIndex + 1 === currentQuestions.length ? 'See Results' : 'Next';
+    nextBtn.disabled = false;
+
+    nextBtn.removeEventListener('click', showCorrectAnswer);
+    nextBtn.addEventListener('click', nextQuestion);
+  }
+
+  function nextQuestion() {
+    currentQuestionIndex++;
+    if (currentQuestionIndex < currentQuestions.length) {
+      loadQuestion();
+      startTimer();
+      nextBtn.textContent = 'Next';
+      nextBtn.disabled = true;
+
+      nextBtn.removeEventListener('click', nextQuestion);
+      nextBtn.addEventListener('click', showCorrectAnswer);
+    } else {
+      showResult();
+    }
+  }
+
+  function showResult() {
+    quizDiv.style.display = 'none';
+    resultDiv.style.display = 'block';
+    restartBtn.style.display = 'block';
+    resultDiv.textContent = `You scored ${score} out of ${currentQuestions.length}!`;
+  }
+
+  function startTimer() {
+    timeLeft = TIME_PER_QUESTION;
+    updateTimer();
+    timer = setInterval(() => {
+      timeLeft--;
+      updateTimer();
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        disableOptions();
+        nextBtn.disabled = false;
+        nextBtn.textContent = currentQuestionIndex + 1 === currentQuestions.length ? 'See Results' : 'Next';
+
+        nextBtn.removeEventListener('click', showCorrectAnswer);
+        nextBtn.addEventListener('click', nextQuestion);
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    clearInterval(timer);
+  }
+
+  function updateTimer() {
+    timerDiv.textContent = `Time left: ${timeLeft}s`;
+  }
+
+  function disableOptions() {
+    Array.from(optionsList.children).forEach(li => {
+      li.classList.add('disabled');
+      li.style.pointerEvents = 'none';
+    });
+  }
+
+  restartBtn.addEventListener('click', () => {
+    setupContainer.style.display = 'block';
+    quizDiv.style.display = 'none';
+    resultDiv.style.display = 'none';
+    restartBtn.style.display = 'none';
+    categorySelect.value = '';
+    levelSelect.value = '';
+    levelSelect.disabled = true;
+    startBtn.disabled = true;
+  });
+</script>
+
+</body>
+</html>
+
