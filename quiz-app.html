@@ -150,7 +150,7 @@
 </div>
 
 <script>
-  // Quiz questions structured by category and difficulty level
+  
   const quizData = {
     general: {
       easy: [
@@ -268,7 +268,7 @@
     }
   };
 
-  // DOM Elements
+  
   const categorySelect = document.getElementById('categorySelect');
   const levelSelect = document.getElementById('levelSelect');
   const startBtn = document.getElementById('start-btn');
@@ -289,7 +289,7 @@
   const TIME_PER_QUESTION = 15;
   let timeLeft = TIME_PER_QUESTION;
 
-  // Populate categories dropdown
+  
   function populateCategories() {
     Object.keys(quizData).forEach(cat => {
       const option = document.createElement('option');
@@ -301,14 +301,13 @@
 
   populateCategories();
 
-  // Enable level select only after category is chosen
   categorySelect.addEventListener('change', () => {
     levelSelect.disabled = !categorySelect.value;
     levelSelect.value = '';
     startBtn.disabled = true;
   });
 
-  // Enable start button only if both category and level are selected
+  
   levelSelect.addEventListener('change', () => {
     startBtn.disabled = !(categorySelect.value && levelSelect.value);
   });
@@ -359,17 +358,15 @@
   }
 
   function selectOption(li, option) {
-    // Only allow selecting options if not disabled
+
     if (li.classList.contains('disabled')) return;
 
-    // Remove 'selected' from all options
+
     Array.from(optionsList.children).forEach(child => child.classList.remove('selected'));
 
-    // Select the clicked option
     li.classList.add('selected');
     selectedOption = option;
 
-    // Enable Next button when an option is selected
     nextBtn.disabled = false;
   }
 
